@@ -1,0 +1,25 @@
+{
+  "name": "discord-music-bot",
+  "version": "1.0.0",
+  "description": "Discord music bot, built on Discord.js",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aequasi/music-bot.git"
+  },
+  "author": "Aaron Scherer <aequasi@gmail.com> (http://aaronscherer.me)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aequasi/music-bot/issues"
+  },
+  "homepage": "https://github.com/aequasi/music-bot#readme",
+  "dependencies": {
+    "discord-bot-base": "^3.0",
+    "google-url": "0.0.4",
+    "slug": "^0.9.1",
+    "youtube-dl": "^1.10.5"
+  }
+}
