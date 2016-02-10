@@ -6,10 +6,6 @@ class PlaylistsCommand extends AbstractCommand {
 
     static get description() { return 'Shows information on all of the playlists'; }
 
-    initialize() {
-        this.brain = this.container.get('brain.mongo');
-    }
-
     handle() {
         this.responds(/^playlists$/, () => {
             Playlist.find({}, (err, playlists) => {
@@ -20,18 +16,20 @@ class PlaylistsCommand extends AbstractCommand {
                 }
 
                 let message = `There are currently ${playlists.length} playlists: \n\n`;
+                let delay = 0;
                 playlists.forEach((playlist, index) => {
                     let user = this.client.users.get('id', playlist.user);
 
                     if (message.length >= 1800) {
-                        this.sendMessage(this.message.channel, message);
+                        delay += 50;
+                        this.sendMessage(this.message.channel, message, delay);
                         message = '';
                     }
 
                     message += `\`${index+1}.\` **${playlist.name}** by **${user.name}**\n`;
                 });
 
-                this.sendMessage(this.message.channel, message);
+                this.sendMessage(this.message.channel, message, delay + 50);
             });
         })
     }

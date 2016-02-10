@@ -12,7 +12,6 @@ class PlayCommand extends AbstractCommand {
     static get help() { return 'Run this with a playlist name to get play the playlist'; }
 
     initialize() {
-        this.brain = this.container.get('brain.memory');
         this.helper = this.container.get('helper.playback');
     }
 

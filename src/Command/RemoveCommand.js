@@ -11,7 +11,6 @@ class RemoveCommand extends AbstractCommand {
 
     initialize() {
         this.helper = new MessageHelper(this.client, this.message);
-        this.brain  = this.container.get('brain.mongo');
     }
 
     handle() {
@@ -35,9 +34,32 @@ class RemoveCommand extends AbstractCommand {
 
                 playlist.remove();
 
-                this.reply(`The playlist \`${name}\` has been deleted.`);
+                this.reply(`The playlist **${name}** has been deleted.`);
             });
-        })
+        });
+
+        this.responds(/^remove ([\w\d_\-]+) (\d+)$/, (matches) => {
+            let name = matches[1],
+                index = matches[2] - 1;
+
+            Playlist.findOne({name: name}, (err, playlist) => {
+                if (err) { this.logger.error(err); }
+
+                if (!playlist) {
+                    return this.reply("A playlist with that name doesn't exists.");
+                }
+
+                if (playlist.songs[index] === undefined) {
+                    return this.reply("No song with that index exists")
+                }
+
+                let song = playlist.songs[index];
+                playlist.songs.splice(index, 1);
+                playlist.save();
+
+                this.reply(`The song **${song.name}** has been deleted from **${playlist.name}**.`);
+            });
+        });
     }
 }
 

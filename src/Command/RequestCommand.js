@@ -13,7 +13,6 @@ class RequestCommand extends AbstractCommand {
     static get help() { return 'Run this command with a link to request it.'; }
 
     initialize() {
-        this.brain     = this.container.get('brain.mongo');
         this.shortener = this.container.get('urlShortener');
     }
 
@@ -24,54 +23,91 @@ class RequestCommand extends AbstractCommand {
 
         this.responds(urlRegex, matches => {
             let url = matches[1];
-            this.reply("Checking song information");
 
-            ytdl.getInfo(url, [], (err, info) => {
-                Request.findOne({name: info.title}, (err, result) => {
-                    if (result) {
-                        return this.sendMessage(this.message.channel, "Song already added/requested.");
-                    }
+            this.client.sendMessage(
+                this.message.channel,
+                "Fetching information. If this is a playlist, it could take a bit.", (error, message) => {
+                    this.fetchingMessage = message;
+                }
+            );
 
-                    let request = new Request({
-                        name:      info.title,
-                        author:    info.uploader,
-                        thumbnail: info.thumbnail,
-                        link:      info.webpage_url,
-                        duration:  info.duration,
-                        user:      this.message.author.id
-                    });
+            ytdl.getInfo(url, [], {maxBuffer: 1000 * 1024}, (err, info) => {
+                let songs = Array.isArray(info) ? info : [info];
 
-                    request.save(error => {
-                        if (error) {
-                            this.sendMessage(this.message.channel, "There was an issue requesting that song.");
-                            this.logger.error(error);
-                            console.log(error);
+                this.client.deleteMessage(this.fetchingMessage, (err) => {
+                    console.log(err);
+                });
 
-                            return;
-                        }
+                songs.forEach(this.requestSong.bind(this, songs.length));
 
-                        this.shortener.shorten(info.webpage_url, (error, shortUrl) => {
-                            if (error) {
-                                return this.logger.error(error);
-                            }
+                if (songs.length > 1) {
+                    this.sendMessage(
+                        this.message.channel,
+                        `You have requested to play ${songs.length} songs. A DJ will look at them shortly.`
+                    );
+                }
+            });
+        })
+    }
 
-                            request.link = shortUrl;
-                            request.save(error => {
-                                if (error) {
-                                    this.logger.error(error);
-                                    console.log(error);
-                                }
-                            });
-                        });
+    requestSong(count, song, index) {
+        Request.findOne({name: song.title}, (err, result) => {
+            if (result) {
+                if (count === 1) {
+                    this.sendMessage(
+                        this.message.channel,
+                        `**${song.title}** already added/requested.`
+                    );
+                }
 
+                return false;
+            }
+
+            let request = new Request({
+                name:      song.title,
+                thumbnail: song.thumbnail,
+                link:      song.webpage_url,
+                duration:  song.duration,
+                user:      this.message.author.id
+            });
+
+            request.save(error => {
+                if (error) {
+                    if (count === 1) {
                         this.sendMessage(
                             this.message.channel,
-                            "You have requested to play \`" + info.title + "\`. A DJ will look at it shortly."
+                            `There was an issue requesting **${song.title}**.`
                         );
+                    }
+                    this.logger.error(error);
+                    console.log(error);
+
+                    return false;
+                }
+
+                this.shortener.shorten(song.webpage_url, (error, shortUrl) => {
+                    if (error) {
+                        return this.logger.error(error);
+                    }
+
+                    request.link = shortUrl;
+                    request.save(error => {
+                        if (error) {
+                            this.logger.error(error);
+                            console.log(error);
+                        }
                     });
                 });
-            })
-        })
+
+
+                if (count === 1) {
+                    this.sendMessage(
+                        this.message.channel,
+                        "You have requested to play **" + song.title + "**. A DJ will look at it shortly."
+                    );
+                }
+            });
+        });
     }
 }
 

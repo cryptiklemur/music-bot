@@ -11,7 +11,6 @@ class ApproveRequestCommand extends AbstractCommand {
 
     initialize() {
         this.helper = new MessageHelper(this.client, this.message);
-        this.brain  = this.container.get('brain.mongo');
     }
 
     handle() {

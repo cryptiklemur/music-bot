@@ -1,6 +1,8 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
 const Playlist        = require('../Model/Playlist');
 
+const PER_PAGE = 15;
+
 class PlaylistCommand extends AbstractCommand {
     static get name() { return 'playlist'; }
 
@@ -9,7 +11,7 @@ class PlaylistCommand extends AbstractCommand {
     static get help() { return 'Run this with a playlist name to get information about the playlist'; }
 
     initialize() {
-        this.brain = this.container.get('brain.mongo');
+        this.prefix = this.container.getParameter('prefix');
     }
 
     handle() {
@@ -17,8 +19,10 @@ class PlaylistCommand extends AbstractCommand {
             this.reply(PlaylistCommand.help);
         });
 
-        this.responds(/^playlist ([\w\d_\-]+)$/, matches => {
-            let name = matches[1];
+        this.responds(/^playlist ([\w\d_\-]+)\s?(\d+)?$/, matches => {
+            let name = matches[1],
+                page = matches[2] !== undefined ? parseInt(matches[2]) : 1;
+
             Playlist.findOne({name: name}, (err, playlist) => {
                 if (err) { this.logger.error(err); }
 
@@ -26,19 +30,50 @@ class PlaylistCommand extends AbstractCommand {
                     return this.reply("Could not find playlist with that name.");
                 }
 
-                let message = `There are currently ${playlist.songs.length} songs in this playlist: \n\n`;
-                playlist.songs.forEach((song, index) => {
-                    let user = this.client.users.get('id', song.user);
+                let message = `There are currently ${playlist.songs.length} songs in this playlist: \n`,
+                    pages   = playlist.songs.length % PER_PAGE === 0
+                        ? playlist.songs.length / PER_PAGE
+                        : Math.floor(playlist.songs.length / PER_PAGE) + 1;
+
+                if (pages > 1) {
+                    message += `Page **${page} / ${pages}**:\n`;
+                }
+
+                message += "\n";
+
+                let delay = 0;
+                for (let index = PER_PAGE * (page - 1); index < (PER_PAGE * page); index++) {
+                    let song = playlist.songs[index], user;
+                    if (song === undefined) {
+                        break;
+                    }
+
+                    user = this.client.users.get('id', song.user);
 
                     if (message.length >= 1800) {
-                        this.sendMessage(this.message.channel, message);
+                        delay += 50;
+                        this.sendMessage(this.message.channel, message, delay);
                         message = '';
                     }
 
                     message += `\`${index + 1}.\` **${song.name}** added by **${user.name}**\n`;
-                });
+                }
 
-                this.sendMessage(this.message.channel, message);
+                if (pages > 1) {
+                    message += "\n";
+                    if (page < pages) {
+                        message += `To show the next page, type \`${this.prefix}playlist ${playlist.name} ${page + 1}\``;
+                    }
+                    if (page < pages && page > 1) {
+                        message += "\n";
+                    }
+                    if (page > 1) {
+                        message += `To show the previous page, type \`${this.prefix}playlist ${playlist.name} ${page - 1}\``;
+                    }
+                }
+                message += "\n";
+
+                this.sendMessage(this.message.channel, message, delay + 50);
             });
         })
     }

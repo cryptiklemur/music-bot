@@ -36,13 +36,16 @@ let options = {
             parameters: {
                 redis_url:    env.DISCORD_REDIS_URL,
                 mongo_url:    env.DISCORD_MONGO_URL,
-                download_dir: env.DISCORD_DOWNLOAD_DIR
+                download_dir: env.DISCORD_DOWNLOAD_DIR,
+                server_id:    env.DISCORD_SERVER_ID,
+                channel_name: env.DISCORD_CHANNEL_NAME,
+                volume:       parseFloat(env.DISCORD_VOLUME)
             },
             services:   {
                 urlShortener:      {module: shortener, args: [env.DISCORD_GOOGLE_KEY]},
                 'helper.playback': {
                     module: PlaybackHelper,
-                    args:   [{$ref: 'client'}, {$ref: 'logger'}, {$ref: 'brain.memory'}, '%download_dir%']
+                    args:   [{$ref: 'client'}, {$ref: 'logger'}, {$ref: 'brain.memory'}, '%download_dir%', '%volume%']
                 }
             }
         };
@@ -54,8 +57,4 @@ if (env.DISCORD_ENV !== undefined) {
     environment = env.DISCORD_ENV;
 }
 
-process.on('uncaughtException', function(exception) {
-    console.log(exception.stack);
-});
-
-new Bot('dev', true, options);
+new Bot(environment, false, options);

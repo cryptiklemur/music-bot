@@ -1,6 +1,7 @@
 const slug      = require('slug');
 const fs        = require('fs');
 const youtubedl = require('youtube-dl');
+const _         = require('lodash');
 
 class PlaybackHelper {
     get playing() { return this._playing || false; }
@@ -11,13 +12,15 @@ class PlaybackHelper {
 
     set channel(value) { this._channel = value; }
 
-    constructor(client, logger, brain, dir) {
-        this.client = client;
-        this.logger = logger;
-        this.brain  = brain;
-        this.dir    = dir;
-
+    constructor(client, logger, brain, dir, volume) {
+        this.client  = client;
+        this.logger  = logger;
+        this.brain   = brain;
+        this.dir     = dir;
         this.current = -1;
+        this.volume  = volume;
+
+        this.stream = null;
     }
 
     isPlaying() {
@@ -41,11 +44,14 @@ class PlaybackHelper {
     nextInQueue() {
         this.playing = false;
 
-
         this.current++;
         if (!this.running) {
             this.current = 0;
             return;
+        }
+
+        if (this.queue[this.current] === undefined) {
+            this.current = 0;
         }
 
         this.downloadAndPlay(this.current);
@@ -65,38 +71,76 @@ class PlaybackHelper {
         this.queue[index].playing = true;
         fs.stat(filename, error => {
             if (error === null) {
-                return this.play(filename);
+                return this.play(song, filename);
             }
 
             let video = youtubedl(song.link, ['--format=bestaudio'], {cwd: this.dir});
             video.pipe(fs.createWriteStream(filename));
 
-            video.on('info', () => {
-                console.log("Song started downloading");
+            let size = 0, pos = 0;
+            video.on('info', (info) => {
+                size = info.size;
                 this.logger.info("Song started downloading");
+                this.client.setStatus('idle', "Downloading: \n" + song.name);
             });
 
-            video.on('complete', () => {
-                console.log("Song finished downloading");
+            video.on('data', (chunk) => {
+                pos += chunk.length;
+
+                if (size) {
+                    let percent = (pos / size * 100).toFixed(2);
+                    this.logger.debug("Download status: " + percent + "%");
+                }
+            });
+
+            video.on('end', () => {
                 this.logger.info("Song finished downloading");
-                this.play(filename);
+                this.play(song, filename);
             });
         })
     }
 
-    play(filename) {
-        console.log("Playing " + filename);
-        this.logger.info("Playing " + filename);
+    setVolume(volume) {
+        if (!this.isPlaying()) {
+            throw new Error("Not playing a song.");
+        }
+        volume = volume / 100;
+
+        if (volume > 1) {
+            volume = 1;
+        }
+        if (volume < 0) {
+            volume = 0;
+        }
+
+        this.client.voiceConnection.setVolume(volume);
+    }
+
+    getVolume() {
+        if (!this.isPlaying()) {
+            throw new Error("Not playing a song.");
+        }
+
+        return this.client.voiceConnection.getVolume() * 100;
+    }
+
+    play(song, filename) {
+        if (this.client.voiceConnection === null) {
+            return this.client.reconnect(this.play.bind(this, filename));
+        }
 
         this.client.voiceConnection.playFile(filename, {}, (error, stream) => {
+            this.client.setStatus('online', song.name);
+            this.logger.info("Playing " + filename);
+
             if (error) {
-                console.log(error);
+                this.logger.error(error);
 
                 return this.client.sendMessage(this.channel, "There was an issue playing the current song.");
             }
 
             stream.on('end', (error) => {
-                console.log(error);
+                this.logger.log(error);
 
                 this.nextInQueue();
             })
