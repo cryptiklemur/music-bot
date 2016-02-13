@@ -1,5 +1,4 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
 
 class SummonCommand extends AbstractCommand {
     static get name() { return 'summon'; }
@@ -7,6 +6,10 @@ class SummonCommand extends AbstractCommand {
     static get description() { return 'Summons the bot to the users channel'; }
 
     handle() {
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
         this.responds(/^summon$/, () => {
             this.client.joinVoiceChannel(this.message.author.voiceChannel, error => {
                 if (error) {

@@ -1,27 +1,5 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
-const slug            = require('slug');
-const fs              = require('fs');
-const youtubedl       = require('youtube-dl');
-
-function parseMillisecondsIntoReadableTime(milliseconds) {
-    //Get hours from milliseconds
-    var hours           = milliseconds / (1000 * 60 * 60),
-        absoluteHours   = Math.floor(hours),
-        h               = absoluteHours > 9 ? absoluteHours : '0' + absoluteHours,
-
-        minutes         = (hours - absoluteHours) * 60,
-        absoluteMinutes = Math.floor(minutes),
-        m               = absoluteMinutes > 9 ? absoluteMinutes : '0' + absoluteMinutes,
-
-        seconds         = (minutes - absoluteMinutes) * 60,
-        absoluteSeconds = Math.floor(seconds),
-        s               = absoluteSeconds > 9 ? absoluteSeconds : '0' + absoluteSeconds,
-        time            = m + ':' + s;
-
-
-    return (h != '00' ? h + ':' : '') + time;
-}
+const Parser          = require('../Parser');
 
 class PlayingCommand extends AbstractCommand {
     static get name() { return 'playing'; }
@@ -43,9 +21,11 @@ class PlayingCommand extends AbstractCommand {
                 return this.reply("I'm not connected to a voice channel. Summon me first.");
             }
 
-            let time = parseMillisecondsIntoReadableTime(voice.streamTime),
+            let time = Parser.parseMilliseconds(this.helper.getCurrentTime(true)),
                 song = this.helper.playing;
-            this.reply(`Now Playing: **${song.name}** \`[${time} / ${song.duration}]\` - ${song.link}`);
+
+            console.log(song.duration, Parser.parseSeconds(song.duration));
+            this.reply(`Now Playing: **${song.name}** \`[${time} / ${Parser.parseSeconds(song.duration)}]\` - ${song.link}`);
         });
     }
 }

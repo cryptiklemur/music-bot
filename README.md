@@ -13,8 +13,6 @@ Commands:
 * remove (playlist) - Removes the given playlist
 * remove (playlist) (song index) - Removes the given song from the given playlist
 * skip - Skips the current song (if perms allow), or starts a skip vote. If song is skipped enough, its automatically remove
-* like - Likes the song, if the ratio dips to far, the song is removed
-* dislike - Dislike the song, if the ratio dips to far, the song is removed
 * play (playlist) - Starts playing the given playlist
 * pause - Pauses the current song
 * resume - Resumes the current song

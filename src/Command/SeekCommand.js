@@ -1,27 +1,41 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const MessageHelper   = require('../Helper/MessageHelper');
+const Parser          = require('../Parser');
 
 class PlayingCommand extends AbstractCommand {
-    static get name() { return 'skip'; }
+    static get name() {
+        return 'Seek';
+    }
 
-    static get description() { return 'Votes to skip the current song'; }
+    static get description() {
+        return 'Seek in the current song';
+    }
 
     initialize() {
         this.helper = this.container.get('helper.playback');
     }
 
     handle() {
-        this.responds(/^skip$/, () => {
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
+        this.responds(/^seek ((?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d))$/, (matches) => {
             if (!this.helper.isPlaying()) {
                 return this.reply("No songs playing right now.");
             }
 
-            if ((new MessageHelper(this.client, this.message)).isDJ()) {
-                if (this.client.voiceConnection.playing) {
-                    this.sendMessage(this.message.channel, "Skipped the current song.");
-                    setTimeout(this.client.voiceConnection.stopPlaying(), 500);
-                }
-            }
+            let input   = matches[1],
+                hours   = parseInt(matches[2] || 0),
+                minutes = parseInt(matches[3] || 0),
+                seconds = parseInt(matches[4]),
+                total   = (hours * 60 * 60) + (minutes * 60) + seconds;
+
+            this.helper.seek(total, () => {
+                this.client.sendMessage(
+                    this.message.channel,
+                    `Seeking ${total} seconds ahead to: ${Parser.parseSeconds(total)}`
+                );
+            });
         });
     }
 }

@@ -1,6 +1,4 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
-const json            = require('prettyjson');
 
 class PauseCommand extends AbstractCommand {
     static get name() { return 'pause'; }
@@ -12,12 +10,18 @@ class PauseCommand extends AbstractCommand {
     }
 
     handle() {
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
         this.responds(/^pause$/, () => {
             if (!this.helper.isPlaying()) {
                 return this.reply("I am not playing music!");
             }
 
-            let proc = this.client.voiceConnection.streamProc;
+            this.helper.pause(() => {
+                this.sendMessage(this.message.channel, "Playback has been paused.");
+            });
         });
     }
 }

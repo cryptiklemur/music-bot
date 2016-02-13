@@ -1,26 +1,102 @@
-const slug      = require('slug');
-const fs        = require('fs');
-const youtubedl = require('youtube-dl');
-const _         = require('lodash');
+const slug         = require('slug');
+const fs           = require('fs');
+const youtubedl    = require('youtube-dl');
+const _            = require('lodash');
+const Playlist     = require('../Model/Playlist');
+const child        = require('child_process');
+const EventEmitter = require('events');
+const Parser       = require('../Parser');
 
 class PlaybackHelper {
-    get playing() { return this._playing || false; }
+    get playing() {
+        return this._playing || false;
+    }
 
-    set playing(value) { this._playing = value; }
+    set playing(value) {
+        this._playing = value;
+    }
 
-    get channel() { return this._channel; }
+    get channel() {
+        return this._channel;
+    }
 
-    set channel(value) { this._channel = value; }
+    set channel(value) {
+        this._channel = value;
+    }
 
-    constructor(client, logger, brain, dir, volume) {
-        this.client  = client;
-        this.logger  = logger;
-        this.brain   = brain;
-        this.dir     = dir;
-        this.current = -1;
-        this.volume  = volume;
+    constructor(dispatcher, client, logger, redis, brain, dir, volume, removeAfterSkips) {
+        this.dispatcher       = dispatcher;
+        this.client           = client;
+        this.logger           = logger;
+        this.redis            = redis;
+        this.brain            = brain;
+        this.dir              = dir;
+        this.current          = -1;
+        this.volume           = volume;
+        this.removeAfterSkips = removeAfterSkips;
 
         this.stream = null;
+
+        this.skip               = this.skip.bind(this);
+        this.nextInQueue        = this.nextInQueue.bind(this);
+        this.setQueueChannel    = this.setQueueChannel.bind(this);
+        this.updateQueueChannel = this.updateQueueChannel.bind(this);
+
+        this.dispatcher.on('play', this.updateQueueChannel);
+    }
+
+    setQueueChannel(id) {
+        this.redis.set('music-bot-queue', id);
+        this.dispatcher.removeListener('play', this.updateQueueChannel);
+        this.dispatcher.on('play', this.updateQueueChannel);
+    }
+
+    updateQueueChannel() {
+        this.redis.get('music-bot-queue', (err, id) => {
+            if (err || !id) return;
+            let channel = this.channel.server.channels.get('id', id);
+
+            this.client.getChannelLogs(channel, 50, {}, (error, messages) => {
+                if (messages.length > 1) {
+                    for (let i = 1; i < messages.length; i++) {
+                        this.client.deleteMessage(messages[i]);
+                    }
+                }
+
+                this.client.updateMessage(messages[0], this.getQueueText());
+                clearTimeout(this.queueTimeout);
+                this.queueTimeout = setTimeout(this.updateQueueChannel, 5000);
+            });
+        });
+    }
+
+    getQueueText() {
+        let time    = Parser.parseMilliseconds(this.getCurrentTime(true)),
+            current = this.playing,
+            message = `Now Playing: **${current.name}** \`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
+
+        let added = 0;
+        for (let index = this.current + 1; index < this.queue.length; index++) {
+            if (message.length > 1800) {
+                break;
+            }
+
+            if (index >= this.queue.length) {
+                index = 0;
+            }
+
+            let song = this.queue[index],
+                user = this.client.users.get('id', song.user);
+
+            message += `\`${index}.\` **${song.name}** added by **${user.username}**\n`;
+            added++;
+        }
+
+        if (added < this.queue.length) {
+            message += `\nAnd *${this.queue.length - added}* more songs.`;
+        }
+
+        return message;
     }
 
     isPlaying() {
@@ -28,6 +104,7 @@ class PlaybackHelper {
     }
 
     buildQueue(playlist) {
+        this.playlist = playlist;
         this.brain.get('queue.' + playlist.name, (error, results) => {
             if (error) {
                 this.reply("There was an error building the queue.");
@@ -41,8 +118,38 @@ class PlaybackHelper {
         })
     }
 
+    skip(track) {
+        if (track === undefined) {
+            track = true;
+        }
+
+        if (track) {
+            Playlist.findOne({name: this.playlist.name}, (err, playlist) => {
+                let index = playlist.songs.findIndex(song => song.name == this.queue[this.current].name);
+                if (!playlist.songs[index].skips) {
+                    playlist.songs[index].skips = 0;
+                }
+
+                playlist.songs[index].skips++;
+
+                if (playlist.songs[index].skips > this.removeAfterSkips) {
+                    playlist.songs.splice(index, 1);
+                    this.queue.splice(this.current, 1);
+
+                    this.client.sendMessage(this.channel, 'This song has been removed after being skipped too many times.');
+                }
+
+                playlist.save();
+            });
+        }
+
+        this.stopPlaying();
+    }
+
     nextInQueue() {
-        this.playing = false;
+        if (this.isPlaying()) {
+            this.stopPlaying();
+        }
 
         this.current++;
         if (!this.running) {
@@ -54,50 +161,112 @@ class PlaybackHelper {
             this.current = 0;
         }
 
-        this.downloadAndPlay(this.current);
-    }
-
-    downloadAndPlay(index) {
-        let song     = this.queue[index],
+        let song     = this.getCurrentSong(),
             name     = slug(song.name.toLowerCase()),
             filename = this.dir + '/' + name + '.cache';
 
-        let user = this.client.users.get('id', song.user);
 
-        this.client.setStatus('online', song.name);
-        this.client.sendMessage(this.channel, `Now playing **${song.name}**. Requested by **${user.name}**`);
-        this.playing = song;
-
-        this.queue[index].playing = true;
         fs.stat(filename, error => {
             if (error === null) {
-                return this.play(song, filename);
+                return this.play(song);
             }
 
-            let video = youtubedl(song.link, ['--format=bestaudio'], {cwd: this.dir});
-            video.pipe(fs.createWriteStream(filename));
+            this.download(song.link, songs => this.play(song));
+        });
+    }
 
-            let size = 0, pos = 0;
-            video.on('info', (info) => {
-                size = info.size;
-                this.logger.info("Song started downloading");
-                this.client.setStatus('idle', "Downloading: \n" + song.name);
-            });
+    getCurrentSong() {
+        return this.queue[this.current];
+    }
 
-            video.on('data', (chunk) => {
-                pos += chunk.length;
+    getLinks(link, callback) {
+        child.execFile(
+            __dirname + '/../../node_modules/youtube-dl/bin/youtube-dl',
+            ['--format=bestaudio', '-i', '-J', '--yes-playlist', link],
+            {maxBuffer: 10000 * 1024},
+            (err, stdout, stderr) => {
+                callback(JSON.parse(stdout));
+            }
+        );
+    }
 
-                if (size) {
-                    let percent = (pos / size * 100).toFixed(2);
-                    this.logger.debug("Download status: " + percent + "%");
+    download(link, callback) {
+        this.logger.info("Fetching link info for " + link);
+        this.getLinks(link, (json) => {
+            let items = Array.isArray(json.entries) ? json.entries : [json];
+
+            this.logger.info(`Downloading ${items.length} songs`);
+            let requests = items.map(song => {
+                if (!song) {
+                    return;
                 }
+
+                this.logger.info("Creating promise for " + song.title);
+
+                return new Promise(resolve => {
+                    let video    = youtubedl(song.webpage_url, ['--format=bestaudio'], {
+                            maxBuffer: 10000 * 1024,
+                            cwd:       this.dir
+                        }),
+                        filename = this.dir + '/' + slug(song.title.toLowerCase()) + '.cache';
+                    video.pipe(fs.createWriteStream(filename));
+                    this.logger.info("Song started downloading: " + filename);
+                    this.client.setStatus('online', "Downloading: " + song.title);
+
+                    video.on('error', error => {
+                        this.client.sendMessage(
+                            this.channel,
+                            `There was an error downloading **${song.title}** from the link provided.`
+                        );
+
+                        this.logger.error(error);
+                        resolve(null);
+                    });
+
+                    video.on('end', () => {
+                        this.logger.info("Song finished downloading");
+                        resolve(song);
+                    });
+                })
             });
 
-            video.on('end', () => {
-                this.logger.info("Song finished downloading");
-                this.play(song, filename);
-            });
-        })
+            Promise.all(requests).then(songs => {
+                songs = songs.filter(song => song !== null);
+
+                this.logger.log(`Downloaded ${songs.length} songs`);
+                callback(songs);
+            }).catch(this.logger.error)
+        });
+    }
+
+    play(song, seek, callback) {
+        let name     = slug(song.name.toLowerCase()),
+            filename = this.dir + '/' + name + '.cache';
+
+        seek = seek || 0;
+        this.client.voiceConnection.playFile(filename, {seek: seek}, (error, stream) => {
+            this.dispatcher.emit('play', song);
+
+            this.seekVal = seek > 0 ? seek : false;
+
+            let user = this.client.users.get('id', song.user);
+            this.client.sendMessage(this.channel, `Now playing **${song.name}**. Requested by **${user.name}**`);
+            this.client.setStatus('online', song.name);
+            this.logger.info("Playing " + song.name + ' - ' + filename);
+
+            this.stream  = stream;
+            this.playing = song;
+
+            if (error) {
+                this.logger.error(error);
+
+                return this.client.sendMessage(this.channel, "There was an issue playing the current song.");
+            }
+
+            this.stream.on('end', this.nextInQueue);
+
+            callback();
+        });
     }
 
     setVolume(volume) {
@@ -124,27 +293,49 @@ class PlaybackHelper {
         return this.client.voiceConnection.getVolume() * 100;
     }
 
-    play(song, filename) {
-        if (this.client.voiceConnection === null) {
-            return this.client.reconnect(this.play.bind(this, filename));
+    getCurrentTime(inMs) {
+        inMs     = inMs === undefined ? false : inMs;
+        let time = parseInt(this.client.voiceConnection.streamTime / 1000);
+
+        if (this.seekVal !== false) {
+            time += parseInt(this.seekVal);
         }
 
-        this.client.voiceConnection.playFile(filename, {}, (error, stream) => {
-            this.client.setStatus('online', song.name);
-            this.logger.info("Playing " + filename);
+        return time * (inMs ? 1000 : 1);
+    }
 
-            if (error) {
-                this.logger.error(error);
+    seek(seconds, callback) {
+        if (this.isPlaying()) {
+            this.stopPlaying();
+        }
 
-                return this.client.sendMessage(this.channel, "There was an issue playing the current song.");
-            }
+        let song     = this.queue[this.current],
+            name     = slug(song.name.toLowerCase()),
+            filename = this.dir + '/' + name + '.cache';
 
-            stream.on('end', (error) => {
-                this.logger.log(error);
+        this.play(song, filename, seconds, callback);
+    }
 
-                this.nextInQueue();
-            })
-        });
+    pause(callback) {
+        this.lastPlaytime = this.getCurrentTime();
+        this.stopPlaying(callback);
+    }
+
+    resume(callback) {
+        this.seek(this.lastPlaytime, callback);
+    }
+
+    stopPlaying(callback) {
+        this.playing = false;
+        this.stream.removeListener('end', this.nextInQueue);
+        this.client.setStatus('online', null);
+        if (this.client.voiceConnection !== null) {
+            this.client.voiceConnection.stopPlaying();
+        }
+
+        if (callback !== undefined) {
+            callback();
+        }
     }
 }
 

@@ -1,5 +1,4 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const MessageHelper   = require('../Helper/MessageHelper');
 const Playlist        = require('../Model/Playlist');
 
 class RemoveCommand extends AbstractCommand {
@@ -9,13 +8,9 @@ class RemoveCommand extends AbstractCommand {
 
     static get help() { return 'Pass a playlist name to remove a playlist, or a playlist name and a song index to remove a song.'; }
 
-    initialize() {
-        this.helper = new MessageHelper(this.client, this.message);
-    }
-
     handle() {
-        if (!this.helper.isDJ()) {
-            return false;
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
         }
 
         this.responds(/^remove$/, () => {

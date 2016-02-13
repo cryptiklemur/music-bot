@@ -1,25 +1,29 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
 
-class PauseCommand extends AbstractCommand {
-    static get name() { return 'pause'; }
+class ResumeCommand extends AbstractCommand {
+    static get name() { return 'resume'; }
 
-    static get description() { return 'Pauses the playback from the bot'; }
+    static get description() { return 'Resume the playback from the bot'; }
 
     initialize() {
         this.helper = this.container.get('helper.playback');
     }
 
     handle() {
-        this.responds(/^pause$/, () => {
-            if (!this.helper.isPlaying()) {
-                return this.reply("I am not playing music!");
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
+        this.responds(/^resume$/, () => {
+            if (this.helper.isPlaying()) {
+                return this.reply("I am already playing music!");
             }
 
-            this.helper.pause(() => {
-                this.sendMssage(this.message.channel, "Playback has been paused.");
+            this.helper.resume(() => {
+                this.sendMessage(this.message.channel, "Playback has been resumed.");
             });
         });
     }
 }
 
-module.exports = PauseCommand;
+module.exports = ResumeCommand;

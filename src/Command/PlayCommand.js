@@ -1,8 +1,5 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
 const Playlist        = require('../Model/Playlist');
-const slug            = require('slug');
-const fs              = require('fs');
-const youtubedl       = require('youtube-dl');
 
 class PlayCommand extends AbstractCommand {
     static get name() { return 'play'; }
@@ -16,6 +13,10 @@ class PlayCommand extends AbstractCommand {
     }
 
     handle() {
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
         this.responds(/^play$/, () => {
             this.reply(PlayCommand.help);
         });

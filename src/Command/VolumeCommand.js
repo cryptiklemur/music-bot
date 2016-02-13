@@ -1,5 +1,4 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const ytdl            = require('youtube-dl');
 
 class VolumeCommand extends AbstractCommand {
     static get name() { return 'volume'; }
@@ -11,6 +10,10 @@ class VolumeCommand extends AbstractCommand {
     }
 
     handle() {
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
+        }
+
         this.responds(/^volume$/, () => {
             this.reply(`The current volume is **${this.helper.getVolume()} / 100**.`);
         });

@@ -1,6 +1,5 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
 const Playlist        = require('../Model/Playlist');
-const MessageHelper   = require('../Helper/MessageHelper');
 
 class CreatePlaylistCommand extends AbstractCommand {
     static get name() { return 'create'; }
@@ -9,13 +8,9 @@ class CreatePlaylistCommand extends AbstractCommand {
 
     static get help() { return 'Run this command with a name, to create a playlist. e.g. `create awesome_playlist`'}
 
-    initialize() {
-        this.helper = new MessageHelper(this.client, this.message);
-    }
-
     handle() {
-        if (!this.helper.isDJ()) {
-            return false;
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
         }
 
         this.responds(/^create$/, () => {
@@ -36,9 +31,16 @@ class CreatePlaylistCommand extends AbstractCommand {
                     return this.reply("A playlist with that name already exists.");
                 }
 
-                let playlist = (new Playlist({name: name, user: this.message.author.id})).save();
+                let playlist = (new Playlist({name: name, user: this.message.author.id})).save(error => {
+                    if (error) {
+                        this.reply("There was an error saving this playlist. Check the console.");
+                        this.logger.error(error);
 
-                this.reply(`The playlist \`${name}\` has been created.`);
+                        return;
+                    }
+
+                    this.reply(`The playlist \`${name}\` has been created.`);
+                });
             });
         })
     }

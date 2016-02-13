@@ -1,6 +1,5 @@
 const AbstractCommand = require('discord-bot-base').AbstractCommand;
 const Request         = require('../Model/Request');
-const MessageHelper   = require('../Helper/MessageHelper');
 
 const PER_PAGE = 5;
 
@@ -11,13 +10,11 @@ class RequestsCommand extends AbstractCommand {
 
     initialize() {
         this.prefix = this.container.getParameter('prefix');
-        this.helper = new MessageHelper(this.client, this.message);
     }
 
-
     handle() {
-        if (!this.helper.isDJ()) {
-            return false;
+        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            return;
         }
 
         this.responds(/^requests\s?(\d+)?$/, (matches) => {
@@ -63,6 +60,7 @@ class RequestsCommand extends AbstractCommand {
 \`${index + 1}.\` **${user.name}** requested: **${request.link}**
 \t\t**${request.name}** by **${user.name}**
 \t\t\`${this.prefix}approve ${request.id} <${playlistName === undefined ? 'playlist name' : playlistName}>\`
+\t\t\`${this.prefix}deny ${request.id}\`
 `;
             }
 
