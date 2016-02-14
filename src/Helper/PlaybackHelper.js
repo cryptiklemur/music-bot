@@ -96,7 +96,7 @@ class PlaybackHelper {
             added++;
         }
 
-        if (added < this.queue.length) {
+        if (added < this.queue.length - 1) {
             message += `\nAnd *${this.queue.length - added}* more songs.`;
         }
 
