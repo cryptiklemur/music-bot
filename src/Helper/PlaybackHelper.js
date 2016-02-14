@@ -143,7 +143,7 @@ class PlaybackHelper {
             });
         }
 
-        this.stopPlaying();
+        this.stopPlaying(this.nextInQueue);
     }
 
     nextInQueue() {
