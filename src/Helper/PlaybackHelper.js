@@ -53,7 +53,7 @@ class PlaybackHelper {
 
     updateQueueChannel() {
         this.redis.get('music-bot-queue', (err, id) => {
-            if (err || !id) return;
+            if (err || !id) return this.logger.error(err, id);
             let channel = this.channel.server.channels.get('id', id);
 
             this.client.getChannelLogs(channel, 50, {}, (error, messages) => {
