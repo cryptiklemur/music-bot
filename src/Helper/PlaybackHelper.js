@@ -63,7 +63,11 @@ class PlaybackHelper {
                     }
                 }
 
-                this.client.updateMessage(messages[0], this.getQueueText());
+                if (messages.length > 0) {
+                    this.client.updateMessage(messages[0], this.getQueueText());
+                } else {
+                    this.client.sendMessage(channel, this.getQueueText());
+                }
                 clearTimeout(this.queueTimeout);
                 this.queueTimeout = setTimeout(this.updateQueueChannel, 5000);
             });
@@ -244,7 +248,7 @@ class PlaybackHelper {
             filename = this.dir + '/' + name + '.cache';
 
         seek = seek || 0;
-        this.client.voiceConnection.playFile(filename, {seek: seek}, (error, stream) => {
+        this.client.voiceConnection.playFile(filename, {volume: this.volume, seek: seek}, (error, stream) => {
             this.dispatcher.emit('play', song);
 
             this.seekVal = seek > 0 ? seek : false;
