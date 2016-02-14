@@ -19,6 +19,21 @@ class QueueCommand extends AbstractCommand {
             return;
         }
 
+        this.responds(/^queue(?: )?channel$/, () => {
+            this.redis.get('music-bot-queue', (err, id) => {
+                if (err || !id) {
+                    this.sendMessage(this.message.channel, "There was an error fetching the queue channel. Might not be one.");
+                    console.log(err, id);
+
+                    return;
+                }
+                
+                let channel = this.message.server.channels.get('id', id);
+
+                this.sendMessage(this.message.channel, `The current queue channel is: ` + channel.mention());
+            });
+        });
+
         this.responds(/^queue(?: )?channel <#(\d+)>$/, (matches) => {
             let channel = this.message.server.channels.get('id', matches[1]);
 
