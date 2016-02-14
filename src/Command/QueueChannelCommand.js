@@ -11,7 +11,7 @@ class QueueCommand extends AbstractCommand {
 
     initialize() {
         this.helper = this.container.get('helper.playback');
-        this.brain = this.container.get('helper.redis');
+        this.brain = this.container.get('brain.redis');
     }
 
     handle() {
