@@ -92,7 +92,7 @@ class PlaybackHelper {
             let song = this.queue[index],
                 user = this.client.users.get('id', song.user);
 
-            message += `\`${index}.\` **${song.name}** added by **${user.username}**\n`;
+            message += `\`${added + 1}.\` **${song.name}** added by **${user.username}**\n`;
             added++;
         }
 
