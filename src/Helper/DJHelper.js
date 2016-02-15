@@ -10,7 +10,7 @@ class DJHelper {
 
         let role = server.roles.get('name', 'DJ');
 
-        return user.hasRole(role) || user.id === this.client.admin.id;
+        return this.client.memberHasRole(user, role) || user.id === this.client.admin.id;
     }
 }
 
