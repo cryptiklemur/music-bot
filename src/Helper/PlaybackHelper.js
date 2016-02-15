@@ -254,7 +254,16 @@ class PlaybackHelper {
             this.seekVal = seek > 0 ? seek : false;
 
             let user = this.client.users.get('id', song.user);
-            this.client.sendMessage(this.channel, `Now playing **${song.name}**. Requested by **${user.name}**`);
+
+            let playMessage;
+            this.client.sendMessage(
+                this.channel,
+                `Now playing **${song.name}**. Requested by **${user.name}**`,
+                (error, message) => {
+                    playMessage = message;
+                }
+            );
+
             this.client.setStatus('online', song.name);
             this.logger.info("Playing " + song.name + ' - ' + filename);
 
@@ -268,6 +277,7 @@ class PlaybackHelper {
             }
 
             this.stream.on('end', this.nextInQueue);
+            this.stream.on('end', () => this.client.deleteMessage(playMessage));
 
             callback();
         });
