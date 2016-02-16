@@ -67,13 +67,13 @@ class RequestsCommand extends AbstractCommand {
             if (pages > 1) {
                 message += "\n";
                 if (page < pages) {
-                    message += `To show the next page, type \`${this.prefix}request ${page + 1}\``;
+                    message += `To show the next page, type \`${this.prefix}requests ${page + 1}\``;
                 }
                 if (page < pages && page > 1) {
                     message += "\n";
                 }
                 if (page > 1) {
-                    message += `To show the previous page, type \`${this.prefix}request ${page - 1}\``;
+                    message += `To show the previous page, type \`${this.prefix}requests ${page - 1}\``;
                 }
             }
             message += "\n";

@@ -4,7 +4,7 @@ class DJHelper {
     }
 
     isDJ(server, user) {
-        if (!server) {
+        if (!server || !server.roles) {
             return false;
         }
 
