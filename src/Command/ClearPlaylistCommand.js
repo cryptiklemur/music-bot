@@ -9,15 +9,16 @@ class ClearPlaylistCommand extends AbstractCommand {
     static get help() { return 'Run this command with a name, to clear a playlist. e.g. `clear awesome_playlist`'}
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
 
         this.responds(/^clear$/, () => {
             this.reply(ClearPlaylistCommand.help);
         });
 
         this.responds(/^clear ([\w\d_\-]+)$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let name = matches[1];
 
             Playlist.findOne({name: name}, (err, playlist) => {

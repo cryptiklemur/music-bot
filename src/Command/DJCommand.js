@@ -10,11 +10,11 @@ class ShuffleCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^DJ <@(\d+)>$/i, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             if (this.message.isPm()) {
                 return false;
             }

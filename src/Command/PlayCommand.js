@@ -13,15 +13,15 @@ class PlayCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^play$/, () => {
             this.reply(PlayCommand.help);
         });
 
         this.responds(/^play ([\w\d_\-]+)$/, matches => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             if (this.helper.isPlaying()) {
                 return this.reply("I am already playing music!");
             }

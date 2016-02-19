@@ -24,15 +24,15 @@ class AddSongCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^add$/, () => {
             this.reply(AddSongCommand.help);
         });
 
         this.responds(regex, matches => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let name = matches[1],
                 url  = matches[2];
 

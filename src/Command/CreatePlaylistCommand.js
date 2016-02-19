@@ -9,15 +9,15 @@ class CreatePlaylistCommand extends AbstractCommand {
     static get help() { return 'Run this command with a name, to create a playlist. e.g. `create awesome_playlist`'}
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^create$/, () => {
             this.reply(CreatePlaylistCommand.help);
         });
 
         this.responds(/^create ([\w\d_\-\s]+)$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let name = matches[1];
 
             if (name.indexOf(' ') >= 0 || name.indexOf("\t") >= 0) {

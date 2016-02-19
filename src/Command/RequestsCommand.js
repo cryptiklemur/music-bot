@@ -13,11 +13,11 @@ class RequestsCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^requests\s?(\d+)?$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let page = matches[1] !== undefined ? parseInt(matches[1]) : 1;
 
             this.findRequests(page);

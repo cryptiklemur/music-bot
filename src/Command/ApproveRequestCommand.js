@@ -9,11 +9,11 @@ class ApproveRequestCommand extends AbstractCommand {
     static get description() { return 'Approves the given request'; }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^approve ([A-Za-f\d]{24}) ([\w\d_\-]+)/, matches => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let id       = matches[1],
                 playlist = matches[2];
 

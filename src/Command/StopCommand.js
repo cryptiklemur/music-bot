@@ -14,11 +14,11 @@ class StopCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^stop$/, () => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             if (!this.helper.isPlaying()) {
                 return this.reply("I am not playing music!");
             }

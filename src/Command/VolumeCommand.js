@@ -10,15 +10,15 @@ class VolumeCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^volume$/, () => {
             this.reply(`The current volume is **${this.helper.getVolume()} / 100**.`);
         });
 
         this.responds(/^volume (\d+)$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+            
             let volume = parseInt(matches[1]);
             console.log(volume);
             if (volume > 100 || volume < 0) {

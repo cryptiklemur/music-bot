@@ -9,15 +9,15 @@ class RemoveCommand extends AbstractCommand {
     static get help() { return 'Pass a playlist name to remove a playlist, or a playlist name and a song index to remove a song.'; }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^remove$/, () => {
             this.reply(RemoveCommand.help);
         });
 
         this.responds(/^remove ([\w\d_\-]+)$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let name = matches[1];
 
             Playlist.findOne({name: name}, (err, playlist) => {
@@ -34,6 +34,10 @@ class RemoveCommand extends AbstractCommand {
         });
 
         this.responds(/^remove ([\w\d_\-]+) (\d+)$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             let name = matches[1],
                 index = matches[2] - 1;
 

@@ -15,11 +15,11 @@ class PlayingCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^seek ((?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d))$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             if (!this.helper.isPlaying()) {
                 return this.reply("No songs playing right now.");
             }

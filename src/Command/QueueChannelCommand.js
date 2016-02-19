@@ -15,11 +15,11 @@ class QueueCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^queue(?: )?channel$/, () => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             this.brain.get('music-bot-queue', (err, id) => {
                 if (err || !id) {
                     this.sendMessage(this.message.channel, "There was an error fetching the queue channel. Might not be one.");
@@ -35,6 +35,10 @@ class QueueCommand extends AbstractCommand {
         });
 
         this.responds(/^queue(?: )?channel <#(\d+)>$/, (matches) => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+            
             let channel = this.message.server.channels.get('id', matches[1]);
 
             if (!channel) {

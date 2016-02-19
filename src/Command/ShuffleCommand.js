@@ -14,11 +14,11 @@ class ShuffleCommand extends AbstractCommand {
     }
 
     handle() {
-        if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
-            return;
-        }
-
         this.responds(/^shuffle$/, () => {
+            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+                return;
+            }
+
             if (!this.helper.isPlaying()) {
                 return this.reply("No playlist is playing right now.");
             }
