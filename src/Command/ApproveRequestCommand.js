@@ -48,6 +48,10 @@ class ApproveRequestCommand extends AbstractCommand {
                         request.remove();
 
                         let user = this.client.users.get('id', request.user);
+                        if (!user) {
+                            user = this.client.admin;
+                        }
+
                         this.sendMessage(user, `**${request.name}** has been accepted into **${playlist.name}**.`);
                         this.sendMessage(
                             this.message.channel,

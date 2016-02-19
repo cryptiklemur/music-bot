@@ -49,6 +49,9 @@ class RequestsCommand extends AbstractCommand {
                 }
 
                 user = this.client.users.get('id', request.user);
+                if (!user) {
+                    user = this.client.admin;
+                }
 
                 if (message.length >= 1800) {
                     delay += 50;

@@ -25,6 +25,9 @@ class ApproveRequestCommand extends AbstractCommand {
 
 
                 let user = this.client.users.get('id', request.user);
+                if (!user) {
+                    user = this.client.admin;
+                }
 
                 this.sendMessage(user, `**${request.name}** has been denied.`);
                 request.remove();
