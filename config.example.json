@@ -1,0 +1,12 @@
+{
+    "admin_id": "Your Discord ID. You can find this by running \@Yourname in Discord",
+    "email": "The registered email address of your bot",
+    "password": "The password for your bot's account",
+    "server_id": "The Discord server ID that you want the bot to join",
+    "channel_name": "The default channel to have the bot join on connect",
+    "google_key": "Your API key for Google URL shortener. This is currently required",
+    "download_dir": "The absolute path to the directory you want to use for the bot cache",
+    "redis_url": "The connection URL for your Redis server",
+    "mongo_url": "The connection URL for your MongoDB server",
+    "volume": "The default volume for the bot"
+}
