@@ -18,7 +18,7 @@ class VolumeCommand extends AbstractCommand {
             if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
                 return;
             }
-            
+
             let volume = parseInt(matches[1]);
             console.log(volume);
             if (volume > 100 || volume < 0) {

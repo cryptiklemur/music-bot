@@ -49,11 +49,17 @@ class PlaybackHelper {
         this.redis.set('music-bot-queue', id);
         this.dispatcher.removeListener('play', this.updateQueueChannel);
         this.dispatcher.on('play', this.updateQueueChannel);
+        this.updateQueueChannel();
     }
 
     updateQueueChannel() {
         this.redis.get('music-bot-queue', (err, id) => {
-            if (err || !id) return this.logger.error(err, id);
+            if (err || !id) {
+                clearTimeout(this.queueTimeout);
+                this.queueTimeout = setTimeout(this.updateQueueChannel, 5000);
+                
+                return this.logger.error(err, id);
+            }
             let channel = this.channel.server.channels.get('id', id);
 
             this.client.getChannelLogs(channel, 50, {}, (error, messages) => {
