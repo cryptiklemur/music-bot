@@ -22,6 +22,23 @@ function shortener(key) {
     return new GoogleUrl({key: key});
 }
 
+try {
+    var config = require('../config.json');
+
+    env.DISCORD_ADMIN_ID     = config.admin_id;
+    env.DISCORD_EMAIL        = config.email;
+    env.DISCORD_PASSWORD     = config.password;
+    env.DISCORD_SERVER_ID    = config.server_id;
+    env.DISCORD_CHANNEL_NAME = config.channel_name;
+    env.DISCORD_GOOGLE_KEY   = config.google_key;
+    env.DISCORD_DOWNLOAD_DIR = config.download_dir;
+    env.DISCORD_REDIS_URL    = config.redis_url;
+    env.DISCORD_MONGO_URL    = config.mongo_url;
+    env.DISCORD_VOLUME       = config.volume;
+} catch (e) {
+    console.log('Config file not found, falling back on environment variables.');
+}
+
 let options = {
     admin_id:  env.DISCORD_ADMIN_ID,
     email:     env.DISCORD_EMAIL,
