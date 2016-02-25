@@ -82,7 +82,7 @@ class PlaybackHelper {
     getQueueText() {
         let time    = Parser.parseMilliseconds(this.getCurrentTime(true)),
             current = this.playing,
-            message = `Playing the **${this.playlist.name}** playlist.\nNow Playing: **${current.name}** \`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
+            message = `Playing the **${this.playlist.name}** playlist.\n\nNow Playing: **${current.name}**\n\`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
 
         let added = 0;
         for (let index = this.current + 1; index < this.queue.length; index++) {
