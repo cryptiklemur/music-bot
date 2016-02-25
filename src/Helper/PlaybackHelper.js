@@ -4,7 +4,6 @@ const youtubedl    = require('youtube-dl');
 const _            = require('lodash');
 const Playlist     = require('../Model/Playlist');
 const child        = require('child_process');
-const EventEmitter = require('events');
 const Parser       = require('../Parser');
 
 class PlaybackHelper {
@@ -57,8 +56,8 @@ class PlaybackHelper {
             if (err || !id) {
                 clearTimeout(this.queueTimeout);
                 this.queueTimeout = setTimeout(this.updateQueueChannel, 5000);
-                
-                return this.logger.error(err, id);
+
+                return this.logger.error('updateQueueChannel error: ', err, id);
             }
             let channel = this.channel.server.channels.get('id', id);
 
@@ -83,7 +82,7 @@ class PlaybackHelper {
     getQueueText() {
         let time    = Parser.parseMilliseconds(this.getCurrentTime(true)),
             current = this.playing,
-            message = `Now Playing: **${current.name}** \`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
+            message = `Playing the **${this.playlist.name}** playlist.\nNow Playing: **${current.name}** \`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
 
         let added = 0;
         for (let index = this.current + 1; index < this.queue.length; index++) {
