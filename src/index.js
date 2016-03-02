@@ -5,9 +5,9 @@ const GoogleUrl      = require('google-url');
 const pkg            = require('../package');
 const Bot            = require('./Bot');
 const env            = process.env;
-const Commands       = require('require-all')(__dirname + '/Command/');
 const PlaybackHelper = require('./Helper/PlaybackHelper');
 const DJHelper       = require('./Helper/DJHelper');
+const Commands       = require('require-all')(__dirname + '/Command/');
 
 let commands = [];
 for (let name in Commands) {

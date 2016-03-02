@@ -84,8 +84,10 @@ class PlaybackHelper {
             current = this.playing,
             message = `Playing the **${this.playlist.name}** playlist.\n\nNow Playing: **${current.name}**\n\`[${time} / ${Parser.parseSeconds(current.duration)}]\` - *${current.link}*\n\n`;
 
-        let added = 0;
-        for (let index = this.current + 1; index < this.queue.length; index++) {
+        let added = 0,
+            index = this.current + 1;
+
+        while(true) {
             if (message.length > 1800) {
                 break;
             }
@@ -99,6 +101,7 @@ class PlaybackHelper {
 
             message += `\`${added + 1}.\` **${song.name}** added by **${user.username}**\n`;
             added++;
+            index++;
         }
 
         if (added < this.queue.length - 1) {
