@@ -16,7 +16,6 @@ try {
 
     env.DISCORD_ADMIN_ID     = config.admin_id;
     env.DISCORD_TOKEN        = config.token;
-    env.DISCORD_SERVER_ID    = config.server_id;
     env.DISCORD_CHANNEL_NAME = config.channel_name;
     env.DISCORD_GOOGLE_KEY   = config.google_key;
     env.DISCORD_DOWNLOAD_DIR = config.download_dir;
@@ -46,7 +45,6 @@ let options = {
         return {
             parameters: {
                 download_dir:       env.DISCORD_DOWNLOAD_DIR,
-                server_id:          env.DISCORD_SERVER_ID,
                 channel_name:       env.DISCORD_CHANNEL_NAME,
                 skip_count:         3,
                 remove_after_skips: 5,

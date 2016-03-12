@@ -14,17 +14,25 @@ class Bot extends BaseBot {
     }
 
     connect(callback) {
-        let server = this.client.servers.get('id', this.container.getParameter('server_id'));
-        if (!server) {
-            throw new Error("Server with that ID not found.");
-        }
+        callback = callback === undefined ? function() {} : callback;
 
-        let channel = server.channels.get('name', this.container.getParameter('channel_name'));
-        if (!channel) {
-            throw new Error("Channel with that name not found in: " + server.name);
-        }
+        let joined = 0;
+        this.client.servers.forEach(server => {
+            let channel = server.channels.get('name', this.container.getParameter('channel_name'));
+            if (channel) {
+                this.client.joinVoiceChannel(channel, () => joined++);
+            } else {
+                joined++;
+            }
+        });
 
-        this.client.joinVoiceChannel(channel, callback);
+        let interval = setInterval(() => {
+            if (joined >= this.client.servers.length) {
+                clearInterval(interval);
+                this.logger.info("Connected to voice channels");
+                callback();
+            }
+        }, 100);
     }
 }
 
