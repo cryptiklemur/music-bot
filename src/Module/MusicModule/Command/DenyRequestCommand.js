@@ -1,20 +1,27 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Request         = require('../Model/Request');
-const Song            = require('../Model/Song');
-const Playlist        = require('../Model/Playlist');
+const AbstractCommand = require('../AbstractCommand'),
+      Request         = require('../Model/Request'),
+      Song            = require('../Model/Song');
 
 class ApproveRequestCommand extends AbstractCommand {
-    static get name() { return 'deny'; }
+    static get name() {
+        return 'deny';
+    }
 
-    static get description() { return 'Denies the given request'; }
+    static get description() {
+        return 'Denies the given request';
+    }
+
+    static get adminCommand() {
+        return true;
+    }
 
     handle() {
         this.responds(/^deny ([A-Za-f\d]{24})/, matches => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
-            let id       = matches[1];
+            let id = matches[1];
 
             Request.findOne({_id: id}, (error, request) => {
                 if (error) {

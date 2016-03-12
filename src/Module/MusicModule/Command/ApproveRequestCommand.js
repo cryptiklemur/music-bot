@@ -1,16 +1,24 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Request         = require('../Model/Request');
-const Song            = require('../Model/Song');
-const Playlist        = require('../Model/Playlist');
+const AbstractCommand = require('../AbstractCommand'),
+      Request         = require('../Model/Request'),
+      Song            = require('../Model/Song'),
+      Playlist        = require('../Model/Playlist');
 
 class ApproveRequestCommand extends AbstractCommand {
-    static get name() { return 'approve'; }
+    static get name() {
+        return 'approve';
+    }
 
-    static get description() { return 'Approves the given request'; }
+    static get description() {
+        return 'Approves the given request';
+    }
+
+    static get adminCommand() {
+        return true;
+    }
 
     handle() {
         this.responds(/^approve ([A-Za-f\d]{24}) ([\w\d_\-]+)/, matches => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
@@ -53,8 +61,7 @@ class ApproveRequestCommand extends AbstractCommand {
                         }
 
                         this.sendMessage(user, `**${request.name}** has been accepted into **${playlist.name}**.`);
-                        this.sendMessage(
-                            this.message.channel,
+                        this.reply(
                             `**${request.name}** has been approved, and added to the **${playlist.name}** playlist.`
                         );
                     });

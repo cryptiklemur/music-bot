@@ -1,4 +1,4 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
+const AbstractCommand = require('../AbstractCommand');
 
 class ShuffleCommand extends AbstractCommand {
     static get name() {
@@ -9,13 +9,14 @@ class ShuffleCommand extends AbstractCommand {
         return 'Shuffles the queue';
     }
 
-    initialize() {
-        this.helper = this.container.get('helper.playback');
+    static get adminCommand() {
+        return true;
     }
+
 
     handle() {
         this.responds(/^shuffle$/, () => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
@@ -26,7 +27,7 @@ class ShuffleCommand extends AbstractCommand {
             this.shuffle(this.helper.queue);
 
             this.helper.updateQueueChannel();
-            this.client.sendMessage(this.message.channel, "Queue has been shuffled");
+            this.reply("Queue has been shuffled");
         });
     }
 

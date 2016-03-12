@@ -7,6 +7,7 @@ class Bot extends BaseBot {
     onReady() {
         super.onReady();
 
+        this.client = this.container.get('client');
         this.client.setStatus = _.throttle(this.client.setStatus, 500);
         this.client.reconnect = this.connect.bind(this);
         this.client.reconnect();

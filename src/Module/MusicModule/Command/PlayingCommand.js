@@ -1,17 +1,18 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Parser          = require('../Parser');
+const AbstractCommand = require('../AbstractCommand'),
+      Parser          = require('../Parser');
 
 class PlayingCommand extends AbstractCommand {
-    static get name() { return 'playing'; }
+    static get name() {
+        return 'playing';
+    }
 
-    static get description() { return 'Shows the current playing song'; }
-
-    initialize() {
-        this.helper = this.container.get('helper.playback');
+    static get description() {
+        return 'Shows the current playing song';
     }
 
     handle() {
         this.responds(/^playing$/, () => {
+            console.log(this);
             if (!this.helper.isPlaying()) {
                 return this.reply("No songs playing right now.");
             }

@@ -193,10 +193,11 @@ class PlaybackHelper {
 
     getLinks(link, callback) {
         child.execFile(
-            __dirname + '/../../node_modules/youtube-dl/bin/youtube-dl',
+            __dirname + '/../../../../node_modules/youtube-dl/bin/youtube-dl',
             ['--format=bestaudio', '-i', '-J', '--yes-playlist', link],
             {maxBuffer: 10000 * 1024},
             (err, stdout, stderr) => {
+                console.log(stdout);
                 callback(JSON.parse(stdout));
             }
         );

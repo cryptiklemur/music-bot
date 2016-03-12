@@ -1,12 +1,22 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
+const AbstractCommand = require('../AbstractCommand'),
+      Playlist        = require('../Model/Playlist');
 
 class RemoveCommand extends AbstractCommand {
-    static get name() { return 'remove'; }
+    static get name() {
+        return 'remove';
+    }
 
-    static get description() { return 'Removes a playlist, or a song from a playlist'; }
+    static get description() {
+        return 'Removes a playlist, or a song from a playlist';
+    }
 
-    static get help() { return 'Pass a playlist name to remove a playlist, or a playlist name and a song index to remove a song.'; }
+    static get help() {
+        return 'Pass a playlist name to remove a playlist, or a playlist name and a song index to remove a song.';
+    }
+
+    static get adminCommand() {
+        return true;
+    }
 
     handle() {
         this.responds(/^remove$/, () => {
@@ -14,14 +24,16 @@ class RemoveCommand extends AbstractCommand {
         });
 
         this.responds(/^remove ([\w\d_\-]+)$/, (matches) => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
             let name = matches[1];
 
             Playlist.findOne({name: name}, (err, playlist) => {
-                if (err) { this.logger.error(err); }
+                if (err) {
+                    this.logger.error(err);
+                }
 
                 if (!playlist) {
                     return this.reply("A playlist with that name doesn't exists.");
@@ -34,15 +46,17 @@ class RemoveCommand extends AbstractCommand {
         });
 
         this.responds(/^remove ([\w\d_\-]+) (\d+)$/, (matches) => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
-            let name = matches[1],
+            let name  = matches[1],
                 index = matches[2] - 1;
 
             Playlist.findOne({name: name}, (err, playlist) => {
-                if (err) { this.logger.error(err); }
+                if (err) {
+                    this.logger.error(err);
+                }
 
                 if (!playlist) {
                     return this.reply("A playlist with that name doesn't exists.");

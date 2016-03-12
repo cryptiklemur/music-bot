@@ -1,6 +1,6 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
-const Song            = require('../Model/Song');
+const AbstractCommand = require('../AbstractCommand'),
+      Playlist        = require('../Model/Playlist'),
+      Song            = require('../Model/Song');
 
 // Taken from: https://gist.github.com/dperini/729294
 const regex = /^add ([\w\d_\-]+) ((?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*))?$/i;
@@ -18,9 +18,8 @@ class AddSongCommand extends AbstractCommand {
         return 'Run this with a playlist name to and a song link, to add the song to the playlist';
     }
 
-    initialize() {
-        this.helper    = this.container.get('helper.playback');
-        this.shortener = this.container.get('urlShortener');
+    static get adminCommand() {
+        return true;
     }
 
     handle() {
@@ -29,7 +28,7 @@ class AddSongCommand extends AbstractCommand {
         });
 
         this.responds(regex, matches => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ()) {
                 return;
             }
 
@@ -45,8 +44,7 @@ class AddSongCommand extends AbstractCommand {
                     return this.reply("Could not find playlist with that name.");
                 }
 
-                this.client.sendMessage(
-                    this.message.channel,
+                this.reply(
                     "Fetching information. If this is a playlist, it could take a bit.", (error, message) => {
                         this.fetchingMessage = message;
                     }
@@ -64,7 +62,7 @@ class AddSongCommand extends AbstractCommand {
 
             let errors = values.filter(err => err !== undefined);
             if (errors) {
-                this.client.sendMessage(this.message.channel, errors.join("\n"));
+                this.reply(errors.join("\n"));
 
                 if (errors.length === songs.length) {
                     return;
@@ -73,17 +71,14 @@ class AddSongCommand extends AbstractCommand {
 
             playlist.save(error => {
                 if (error) {
-                    this.client.sendMessage(this.message.channel, 'There was an issue adding your songs.');
+                    this.reply('There was an issue adding your songs.');
                     this.logger.error(error);
 
                     return false;
                 }
 
                 let added = songs.length - errors.length;
-                this.client.sendMessage(
-                    this.message.channel,
-                    `You have added **${added}** song${added == 1 ? 's' : ''} to **${playlist.name}**,`
-                );
+                this.client.reply(`You have added **${added}** song${added == 1 ? 's' : ''} to **${playlist.name}**,`);
             })
         }).catch(this.logger.error);
     }
@@ -108,7 +103,7 @@ class AddSongCommand extends AbstractCommand {
                 thumbnail: info.thumbnail,
                 link:      info.webpage_url,
                 duration:  info.duration,
-                user:      this.message.author.id
+                user:      this.author.id
             });
 
             this.shortener.shorten(info.webpage_url, (error, shortUrl) => {

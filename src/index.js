@@ -1,22 +1,11 @@
 'use strict';
 
-const walk           = require('walk');
 const GoogleUrl      = require('google-url');
 const pkg            = require('../package');
 const Bot            = require('./Bot');
 const env            = process.env;
-const PlaybackHelper = require('./Helper/PlaybackHelper');
-const DJHelper       = require('./Helper/DJHelper');
-const Commands       = require('require-all')(__dirname + '/Command/');
-
-let commands = [];
-for (let name in Commands) {
-    if (Commands.hasOwnProperty(name)) {
-        if (name !== 'AbstractCommand') {
-            commands.push(Commands[name]);
-        }
-    }
-}
+const PlaybackHelper = require('./Module/MusicModule/Helper/PlaybackHelper');
+const DJHelper       = require('./Module/MusicModule/Helper/DJHelper');
 
 function shortener(key) {
     return new GoogleUrl({key: key});
@@ -26,8 +15,7 @@ try {
     var config = require('../config.json');
 
     env.DISCORD_ADMIN_ID     = config.admin_id;
-    env.DISCORD_EMAIL        = config.email;
-    env.DISCORD_PASSWORD     = config.password;
+    env.DISCORD_TOKEN        = config.token;
     env.DISCORD_SERVER_ID    = config.server_id;
     env.DISCORD_CHANNEL_NAME = config.channel_name;
     env.DISCORD_GOOGLE_KEY   = config.google_key;
@@ -41,12 +29,13 @@ try {
 
 let options = {
     admin_id:  env.DISCORD_ADMIN_ID,
-    email:     env.DISCORD_EMAIL,
-    password:  env.DISCORD_PASSWORD,
+    token:     env.DISCORD_TOKEN,
     name:      pkg.name,
     version:   pkg.version,
     author:    pkg.author,
-    commands:  commands,
+    modules:   [
+        require('./Module/MusicModule/MusicModule')
+    ],
     prefix:    "!",
     redis_url: env.DISCORD_REDIS_URL,
     mongo_url: env.DISCORD_MONGO_URL,
@@ -65,15 +54,15 @@ let options = {
             },
             services:   {
                 urlShortener:      {module: shortener, args: [env.DISCORD_GOOGLE_KEY]},
-                'helper.dj':       {module: DJHelper, args: [{$ref: 'client'}]},
+                'helper.dj':       {module: DJHelper, args: ['@client']},
                 'helper.playback': {
                     module: PlaybackHelper,
                     args:   [
-                        {$ref: 'dispatcher'},
-                        {$ref: 'client'},
-                        {$ref: 'logger'},
-                        {$ref: 'brain.redis'},
-                        {$ref: 'brain.memory'},
+                        '@dispatcher',
+                        '@client',
+                        '@logger',
+                        '@brain.redis',
+                        '@brain.memory',
                         '%download_dir%',
                         '%volume%',
                         '%remove_after_skips%'

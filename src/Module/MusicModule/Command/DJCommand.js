@@ -1,4 +1,4 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
+const AbstractCommand = require('../AbstractCommand');
 
 class ShuffleCommand extends AbstractCommand {
     static get name() {
@@ -9,18 +9,26 @@ class ShuffleCommand extends AbstractCommand {
         return 'Toggles the DJ role on the given user';
     }
 
+    static get adminCommand() {
+        return true;
+    }
+
+    static get noHelp() {
+        return true;
+    }
+
     handle() {
         this.responds(/^DJ <@(\d+)>$/i, (matches) => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
-            if (this.message.isPm()) {
+            if (this.isPm()) {
                 return false;
             }
 
-            let role = this.message.server.roles.get('name', 'DJ'),
-                user = this.message.server.members.get('id', matches[1]);
+            let role = this.server.roles.get('name', 'DJ'),
+                user = this.server.members.get('id', matches[1]);
 
             if (!role || !user) {
                 return this.reply("Role or User not found.");
@@ -40,6 +48,7 @@ class ShuffleCommand extends AbstractCommand {
             this.client.addMemberToRole(user, role, (error) => {
                 if (error) {
                     this.logger.error(error);
+
                     return this.reply("Could not add user to DJs");
                 }
 

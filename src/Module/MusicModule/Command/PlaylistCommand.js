@@ -1,17 +1,18 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
-
-const PER_PAGE = 15;
+const AbstractCommand = require('../AbstractCommand'),
+      Playlist        = require('../Model/Playlist'),
+      PER_PAGE        = 15;
 
 class PlaylistCommand extends AbstractCommand {
-    static get name() { return 'playlist'; }
+    static get name() {
+        return 'playlist';
+    }
 
-    static get description() { return 'Shows information on the given playlists'; }
+    static get description() {
+        return 'Shows information on the given playlists';
+    }
 
-    static get help() { return 'Run this with a playlist name to get information about the playlist'; }
-
-    initialize() {
-        this.prefix = this.container.getParameter('prefix');
+    static get help() {
+        return 'Run this with a playlist name to get information about the playlist';
     }
 
     handle() {
@@ -24,7 +25,9 @@ class PlaylistCommand extends AbstractCommand {
                 page = matches[2] !== undefined ? parseInt(matches[2]) : 1;
 
             Playlist.findOne({name: name}, (err, playlist) => {
-                if (err) { this.logger.error(err); }
+                if (err) {
+                    this.logger.error(err);
+                }
 
                 if (!playlist) {
                     return this.reply("Could not find playlist with that name.");
@@ -52,7 +55,7 @@ class PlaylistCommand extends AbstractCommand {
 
                     if (message.length >= 1800) {
                         delay += 50;
-                        this.sendMessage(this.message.channel, message, delay);
+                        this.reply(message, delay);
                         message = '';
                     }
 
@@ -73,7 +76,7 @@ class PlaylistCommand extends AbstractCommand {
                 }
                 message += "\n";
 
-                this.sendMessage(this.message.channel, message, delay + 50);
+                this.reply(message, delay + 50);
             });
         })
     }

@@ -1,4 +1,4 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
+const AbstractCommand = require('../AbstractCommand');
 
 class PlayingCommand extends AbstractCommand {
     static get name() {
@@ -6,12 +6,7 @@ class PlayingCommand extends AbstractCommand {
     }
 
     static get description() {
-        return 'Votes to skip the current song - DJ\'s can `next` to skip without tracking.';
-    }
-
-    initialize() {
-        this.helper = this.container.get('helper.playback');
-        this.brain  = this.container.get('brain.memory');
+        return 'Votes to skip the current song';
     }
 
     handle() {
@@ -24,7 +19,7 @@ class PlayingCommand extends AbstractCommand {
                 this.sendMessage(this.message.channel, "Skipped the current song.");
                 setTimeout(this.helper.skip.bind(this.helper, matches[1] === 'next'), 500);
             } else {
-                this.brain.get('skip.' + this.helper.playlist.name, (err, results) => {
+                this.memory.get('skip.' + this.helper.playlist.name, (err, results) => {
                     let skips = !results ? [] : results;
                     if (skips.find(id => this.message.author.id == id)) {
                         return;
@@ -32,12 +27,10 @@ class PlayingCommand extends AbstractCommand {
 
                     skips.push(this.message.author.id);
                     console.log(skips);
-                    this.brain.set('skip.' + this.helper.playlist.name, skips);
+                    this.memory.set('skip.' + this.helper.playlist.name, skips);
 
                     let count        = skips.length,
                         currentUsers = this.client.voiceConnection.voiceChannel.members.length - 1;
-
-                    currentUsers     = 5000;
 
                     if (count < this.container.getParameter('skip_count') && count < currentUsers / 2) {
                         let required = this.container.getParameter('skip_count');
@@ -46,7 +39,7 @@ class PlayingCommand extends AbstractCommand {
 **${required - count}** more vote is required to skip this song.`);
                     }
 
-                    this.sendMessage(this.message.channel, "Skipped the current song.");
+                    this.reply("Skipped the current song.");
                     setTimeout(this.helper.skip, 500);
                 })
             }

@@ -1,26 +1,27 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Request         = require('../Model/Request');
-
-const PER_PAGE = 5;
+const AbstractCommand = require('../AbstractCommand'),
+      Request         = require('../Model/Request'),
+      PER_PAGE        = 5;
 
 class RequestsCommand extends AbstractCommand {
-    static get name() { return 'requests'; }
+    static get name() {
+        return 'requests';
+    }
 
-    static get description() { return 'List all requests'; }
+    static get description() {
+        return 'List all requests';
+    }
 
-    initialize() {
-        this.prefix = this.container.getParameter('prefix');
+    static get adminCommand() {
+        return true;
     }
 
     handle() {
         this.responds(/^requests\s?(\d+)?$/, (matches) => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
-            let page = matches[1] !== undefined ? parseInt(matches[1]) : 1;
-
-            this.findRequests(page);
+            this.findRequests(matches[1] !== undefined ? parseInt(matches[1]) : 1);
         });
     }
 
@@ -55,7 +56,7 @@ class RequestsCommand extends AbstractCommand {
 
                 if (message.length >= 1800) {
                     delay += 50;
-                    this.sendMessage(this.message.channel, message, delay);
+                    this.reply(message, delay);
                     message = '';
                 }
 
@@ -81,7 +82,7 @@ class RequestsCommand extends AbstractCommand {
             }
             message += "\n";
 
-            this.sendMessage(this.message.channel, message, delay + 50);
+            this.reply(message, delay + 50);
         });
     }
 }

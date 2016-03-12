@@ -1,15 +1,21 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
+const AbstractCommand = require('../AbstractCommand'),
+      Playlist        = require('../Model/Playlist');
 
 class PlayCommand extends AbstractCommand {
-    static get name() { return 'play'; }
+    static get name() {
+        return 'play';
+    }
 
-    static get description() { return 'Plays the given playlost'; }
+    static get description() {
+        return 'Plays the given playlist';
+    }
 
-    static get help() { return 'Run this with a playlist name to get play the playlist'; }
+    static get help() {
+        return 'Run this with a playlist name to play it';
+    }
 
-    initialize() {
-        this.helper = this.container.get('helper.playback');
+    static get adminCommand() {
+        return true;
     }
 
     handle() {
@@ -18,7 +24,7 @@ class PlayCommand extends AbstractCommand {
         });
 
         this.responds(/^play ([\w\d_\-]+)$/, matches => {
-            if (!this.container.get('helper.dj').isDJ(this.message.server, this.message.author)) {
+            if (!this.isDJ) {
                 return;
             }
 
@@ -27,11 +33,13 @@ class PlayCommand extends AbstractCommand {
             }
 
             this.helper.running = true;
-            this.helper.channel = this.message.channel;
+            this.helper.channel = this.channel;
 
             let name = matches[1];
             Playlist.findOne({name: name}, (err, playlist) => {
-                if (err) { this.logger.error(err); }
+                if (err) {
+                    this.logger.error(err);
+                }
 
                 if (!playlist) {
                     return this.reply("Could not find playlist with that name.");

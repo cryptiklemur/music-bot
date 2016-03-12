@@ -1,5 +1,5 @@
-const AbstractCommand = require('discord-bot-base').AbstractCommand;
-const Playlist        = require('../Model/Playlist');
+const AbstractCommand = require('../AbstractCommand'),
+      Playlist        = require('../Model/Playlist');
 
 class PlaylistsCommand extends AbstractCommand {
     static get name() {
@@ -11,7 +11,6 @@ class PlaylistsCommand extends AbstractCommand {
     }
 
     handle() {
-
         this.responds(/^playlists$/, () => {
             Playlist.find({}, (err, playlists) => {
                 if (err) {
